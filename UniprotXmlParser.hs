@@ -1,20 +1,26 @@
 {-# LANGUAGE
   Arrows
+  , EmptyDataDecls
   , NoMonomorphismRestriction
   #-}
 module Main where
 
+import Control.Applicative
 import Text.XML.HXT.Arrow
+import Text.Printf
 import System.Directory
+import System.Environment
 import System.FilePath
+import Network.Curl
 
-data Protein = Prot {
-      recommendedName :: String
-    } deriving (Eq, Show)
+data Protein
+
+data ProteinName = Recommended | Submitted deriving (Eq, Show)
 
 data Gene = Gene {
-      geneType :: String
-    , geneName :: String
+      geneType
+    , geneName
+      :: String
     } deriving (Eq, Show)
 
 mkGene t n = Gene {geneType = t, geneName = n}
@@ -76,18 +82,18 @@ entry = atTag "entry" >>>
           acc   <- accession   -< e
           ename <- entryName   -< e
           p     <- proteinName -< e
-          g     <- gene        -< e
-          o     <- organism    -< e
-          returnA -< (acc, o)
-          -- returnA -< (acc, ename, p, g)
+          returnA -< (acc, ename, p)
+
 
 
 accession = extractFromEntry id $ hasName "accession"
 entryName = extractFromEntry id $ hasName "name"
-proteinName = extractFromEntry Prot $
-              hasName "protein"         />
-              hasName "recommendedName" />
-              hasName "fullName"
+proteinName = proc entry -> do
+                e <- getChildren <<< getChildren <<< (hasName "entry" /> hasName "protein") -< entry
+
+                s <- tagData  <<< deepest (hasName "fullName") -< e
+                returnA -< s
+
 
 gene = n &&& t >>> arr (uncurry mkGene)
     where n = extractFromEntry id $ hasName "gene" /> hasName "name"
@@ -101,11 +107,23 @@ dbReference = getAttrValue "type" &&& getAttrValue "key" &&& getAttrValue "id" >
 organism = hasName "entry" /> hasName "organism" >>> multi organismNameType
 
 
+showResult (acc_No, e_name, full_name) =
+    printf "%-8s %-15s %s\n" acc_No e_name full_name
+
+printResults rs = do
+--   showResult ("Acc#", "Entry Name", "Full name")
+  mapM_ showResult rs
+
+printFullName (_, _, n) = putStrLn n
+
+
 main = do
-  let xml = "Research/uniprot.git/uniprot_sprot.xml.top5"
-  h <- getHomeDirectory
-  ds <- runX (readDocument [] (h </> xml) >>> entry)
-  mapM_ print ds
+  accessionNos <- words <$> getContents
+--   let accessionNos = ["P25098"]
+  let xmls = map (\no -> "http://www.uniprot.org/uniprot/" ++ no ++ ".xml") accessionNos
+  ns <- (map head) `fmap` mapM (\xml -> runX (readDocument [] xml >>> entry)) xmls
+  printResults ns
+--   mapM_ printFullName n
 
 
 

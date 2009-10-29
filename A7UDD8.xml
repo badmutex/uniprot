@@ -1,0 +1,95 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<uniprot xmlns="http://uniprot.org/uniprot" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://uniprot.org/uniprot http://www.uniprot.org/support/docs/uniprot.xsd">
+  <entry dataset="TrEMBL" created="2007-10-02" modified="2008-07-22" version="4">
+	<accession>A7UDD8</accession>
+	<name>A7UDD8_PLAFA</name>
+	<protein>
+	  <recommendedName ref="1">
+		<fullName>Beta-adrenergic receptor kinase 1</fullName>
+		<shortName>Beta-ARK-1</shortName>
+	  </recommendedName>
+	  <alternativeName>
+		<fullName>G-protein coupled receptor kinase 2</fullName>
+	  </alternativeName>
+	</protein>
+<!-- 	<protein> -->
+<!-- 	  <submittedName> -->
+<!-- 		<fullName>Erythrocyte membrane protein one</fullName> -->
+<!-- 	  </submittedName> -->
+<!-- 	</protein> -->
+	<organism key="1">
+	  <name type="scientific">Plasmodium falciparum</name>
+	  <dbReference type="NCBI Taxonomy" id="5833" key="2" />
+	  <lineage>
+		<taxon>Eukaryota</taxon>
+		<taxon>Alveolata</taxon>
+		<taxon>Apicomplexa</taxon>
+		<taxon>Aconoidasida</taxon>
+		<taxon>Haemosporida</taxon>
+		<taxon>Plasmodium</taxon>
+		<taxon>Plasmodium (Laverania)</taxon>
+	  </lineage>
+	</organism>
+	<reference key="3">
+	  <citation type="submission" date="2007-07" db="EMBL/GenBank/DDBJ databases">
+		<title>Gene conversion events generate diversity within the multi-copy variant antigen gene families of Plasmodium falciparum.</title>
+		<authorList>
+		  <person name="Frank M." />
+		  <person name="Kirkman L." />
+		  <person name="Costantini D." />
+		  <person name="Sanyal S." />
+		  <person name="Lavazec C." />
+		  <person name="Templeton T." />
+		  <person name="Deitsch K." />
+		</authorList>
+	  </citation>
+	  <scope>NUCLEOTIDE SEQUENCE</scope>
+	  <source>
+		<strain>NF54</strain>
+	  </source>
+	</reference>
+	<dbReference type="EMBL" id="EU047584" key="4">
+	  <property type="protein sequence ID" value="ABS88275.1" />
+	  <property type="molecule type" value="Genomic_DNA" />
+	</dbReference>
+	<dbReference type="GO" id="GO:0016021" key="5">
+	  <property type="term" value="C:integral to membrane" />
+	  <property type="evidence" value="IEA:InterPro" />
+	</dbReference>
+	<dbReference type="GO" id="GO:0004872" key="6">
+	  <property type="term" value="F:receptor activity" />
+	  <property type="evidence" value="IEA:InterPro" />
+	</dbReference>
+	<dbReference type="GO" id="GO:0009405" key="7">
+	  <property type="term" value="P:pathogenesis" />
+	  <property type="evidence" value="IEA:InterPro" />
+	</dbReference>
+	<dbReference type="InterPro" id="IPR008602" key="8">
+	  <property type="entry name" value="Duffy_bd" />
+	</dbReference>
+	<dbReference type="Pfam" id="PF05424" key="9">
+	  <property type="entry name" value="Duffy_binding" />
+	  <property type="match status" value="1" />
+	</dbReference>
+	<proteinExistence type="Predicted" />
+	<feature type="non-terminal residue">
+	  <location>
+		<position position="1" />
+	  </location>
+	</feature>
+	<feature type="non-terminal residue">
+	  <location>
+		<position position="130" />
+	  </location>
+	</feature>
+	<sequence length="130" mass="15420" checksum="02AE4B15216FD3C1" modified="2007-10-02" version="1" fragment="single">
+	  HAVFADIGDIIRGKDLYVGNRKEREKEKLQNNLKSIFKKIYDNLSDPKARDHYNDAGENY
+	  YQLREDWWNANRQEVWKAIRCSAPTDADYFRSTCSEGTTSTQGKCRCATNDVPTYFDYVP
+	  QYLRWFEEWA
+	</sequence>
+  </entry>
+  <copyright>
+	Copyrighted by the UniProt Consortium, see http://www.uniprot.org/terms
+	Distributed under the Creative Commons Attribution-NoDerivs License
+  </copyright>
+</uniprot>
