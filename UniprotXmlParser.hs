@@ -11,62 +11,61 @@ import Text.Printf
 import System.Directory
 import System.Environment
 import System.FilePath
-import Network.Curl
 
-data Protein
+-- data Protein
 
-data ProteinName = Recommended | Submitted deriving (Eq, Show)
+-- data ProteinName = Recommended | Submitted deriving (Eq, Show)
 
-data Gene = Gene {
-      geneType
-    , geneName
-      :: String
-    } deriving (Eq, Show)
+-- data Gene = Gene {
+--       geneType
+--     , geneName
+--       :: String
+--     } deriving (Eq, Show)
 
-mkGene t n = Gene {geneType = t, geneName = n}
+-- mkGene t n = Gene {geneType = t, geneName = n}
 
-type Taxonomy = String
+-- type Taxonomy = String
 
-data Lineage = Lin {
-      taxonomy :: [Taxonomy]
-    } deriving (Eq, Show)
+-- data Lineage = Lin {
+--       taxonomy :: [Taxonomy]
+--     } deriving (Eq, Show)
 
 
-data OrganismName = Scientific String
-                  | Common String
-                  | Synonym String
-                  | Unknown String
-                    deriving (Eq, Show)
+-- data OrganismName = Scientific String
+--                   | Common String
+--                   | Synonym String
+--                   | Unknown String
+--                     deriving (Eq, Show)
 
-mkOrganismName "scientific" = Scientific
-mkOrganismName "common" = Common
-mkOrganismName "synonym" = Synonym
-mkOrganismName _ = Unknown
+-- mkOrganismName "scientific" = Scientific
+-- mkOrganismName "common" = Common
+-- mkOrganismName "synonym" = Synonym
+-- mkOrganismName _ = Unknown
 
-data Organism = Org {
-      orgNames :: [OrganismName]
-    , orgLineage :: Lineage
-    , orgDbRefs :: [DBRef]
-    } deriving (Eq, Show)
+-- data Organism = Org {
+--       orgNames :: [OrganismName]
+--     , orgLineage :: Lineage
+--     , orgDbRefs :: [DBRef]
+--     } deriving (Eq, Show)
 
-type OrganismHost = Organism
+-- type OrganismHost = Organism
 
-data DBRef = DBRef {
-      dbRefType :: String
-    , dbRefKey :: String
-    , dbRefId :: String
-    } deriving (Eq, Show)
+-- data DBRef = DBRef {
+--       dbRefType :: String
+--     , dbRefKey :: String
+--     , dbRefId :: String
+--     } deriving (Eq, Show)
 
-mkDBRef t k i = DBRef {dbRefType = t, dbRefKey = k, dbRefId = i}
+-- mkDBRef t k i = DBRef {dbRefType = t, dbRefKey = k, dbRefId = i}
 
-data UniprotEntry = UEntry {
-      accessionUE :: String
-    , nameUE :: String
-    , proteinUE :: Protein
-    , geneUE :: Gene
-    , organismUE :: Organism
-    , dbreferencesUE :: [DBRef]
-    }
+-- data UniprotEntry = UEntry {
+--       accessionUE :: String
+--     , nameUE :: String
+--     , proteinUE :: Protein
+--     , geneUE :: Gene
+--     , organismUE :: Organism
+--     , dbreferencesUE :: [DBRef]
+--     }
 
 atTag tag = deep (isElem >>> hasName tag)
 atTag' tag = isElem >>> hasName tag
@@ -95,20 +94,22 @@ proteinName = proc entry -> do
                 returnA -< s
 
 
-gene = n &&& t >>> arr (uncurry mkGene)
-    where n = extractFromEntry id $ hasName "gene" /> hasName "name"
-          t = getAttrValue "type" <<< downFrom "entry" (hasName "gene" /> hasName "name")
 
-organismNameType = getAttrValue "type" &&& getText >>> arr (uncurry mkOrganismName)
 
-dbReference = getAttrValue "type" &&& getAttrValue "key" &&& getAttrValue "id" >>>
-              arr (\(t, (k,i)) -> mkDBRef t k i)
+-- gene = n &&& t >>> arr (uncurry mkGene)
+--     where n = extractFromEntry id $ hasName "gene" /> hasName "name"
+--           t = getAttrValue "type" <<< downFrom "entry" (hasName "gene" /> hasName "name")
 
-organism = hasName "entry" /> hasName "organism" >>> multi organismNameType
+-- organismNameType = getAttrValue "type" &&& getText >>> arr (uncurry mkOrganismName)
+
+-- dbReference = getAttrValue "type" &&& getAttrValue "key" &&& getAttrValue "id" >>>
+--               arr (\(t, (k,i)) -> mkDBRef t k i)
+
+-- organism = hasName "entry" /> hasName "organism" >>> multi organismNameType
 
 
 showResult (acc_No, e_name, full_name) =
-    printf "%-8s %-15s %s\n" acc_No e_name full_name
+    printf "%-8s;%-15s;%s\n" acc_No e_name full_name
 
 printResults rs = do
 --   showResult ("Acc#", "Entry Name", "Full name")
