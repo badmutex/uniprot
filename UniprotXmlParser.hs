@@ -14,8 +14,8 @@ import System.IO.Unsafe
 
 
 atTag tag = deep (isElem >>> hasName tag)
-atTag' tag = isElem >>> hasName tag
-tagData = getChildren >>> getText
+atTag' tag = isElem      >>> hasName tag
+tagData = getChildren    >>> getText
 downFrom top a = proc e -> do
                    returnA <<< hasName top /> a -< e
 extractFrom mk top a  = arr mk <<< tagData <<< downFrom top a
@@ -37,11 +37,9 @@ proteinName = proc entry -> do
                 e <- single fullNames -< entry
                 returnA -< e
 
--- fullNames = tagData <<< atTag "fullName" <<< hasName "entry" /> hasName "protein"
-fullNames = hasName "entry" /> hasName "protein" >>> atTag "fullName" >>> tagData
+fullNames = hasName "entry"     /> hasName "protein" >>> atTag "fullName" >>> tagData
 
--- organismName = tagData <<< atTag "organism" /> hasName "name"
-organismName = atTag "organism" /> hasName "name" >>> tagData
+organismName = atTag "organism" /> hasName "name"    >>> tagData
 
 
 uniprot id = "http://www.uniprot.org/uniprot/" ++ id ++ ".xml"
@@ -58,5 +56,4 @@ work [ori,tar,_,prob] = let ori' = uniprot ori
 main = do
   interactions <- (map words . lines) <$> getContents
   names        <- mapM work interactions
---   names <- runX (readDocument [] (uniprot p53) >>> entry)
   mapM_ putStrLn names
