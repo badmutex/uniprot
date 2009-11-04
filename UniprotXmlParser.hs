@@ -6,6 +6,7 @@ module Main where
 
 import Control.Applicative
 import Control.Monad (sequence)
+import Control.Parallel (pseq)
 import Control.Parallel.Strategies (parMap, rwhnf, rnf)
 import Data.Char (toUpper)
 import Data.List (intercalate, isInfixOf)
@@ -13,6 +14,7 @@ import Data.Ord (comparing)
 import System.Environment
 import Text.XML.HXT.Arrow
 import System.IO.Unsafe
+
 
 data Entry = Entry {
       accession
@@ -76,7 +78,7 @@ mkInteraction [ori,tar,prob] =
     let ori' = uniprot ori
         tar' = uniprot tar
         res = parMap rwhnf (\xml -> runX (readDocument [] xml >>> parseToEntry)) [ori', tar']
-    in (rearrange . flip mkInteraction' (read prob)) <$> sequence (res `seq` res)
+    in (rearrange . flip mkInteraction' (read prob)) <$> sequence (res `pseq` res)
 
         where uniprot id = "http://www.uniprot.org/uniprot/" ++ id ++ ".xml"
               
@@ -103,12 +105,12 @@ hasBoth f s a b = has f s a && has f s b
 has :: (Entry -> String) -> String -> Entry -> Bool
 has f s e = (up s) `isInfixOf` (up $ f e)
     where up :: String -> String
-          up = map toUpper
+          up = parMap rnf toUpper
 
 
 main = do
   let self_interaction [ori,tar,prob] = if ori == tar then False else True
 
-  interactions <- (filter self_interaction . parMap rnf words . lines) <$> getContents
-  names        <- (filter interspecies) <$> mapM mkInteraction interactions
-  mapM_ (putStrLn . csv) names
+  interactions  <- (filter self_interaction . parMap rnf words . lines) <$> getContents
+  interactions' <- filter interspecies <$> mapM mkInteraction interactions
+  mapM_ (putStrLn . csv) interactions'
