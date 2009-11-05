@@ -24,7 +24,7 @@ downloadTo dir id = do
   fe <- doesFileExist f
   if fe
     then return . Left 
-             $ f ++ " exists."
+             $ f ++ " exists"
     else openURI (uniprot id) 
              >>= \res -> return . Right $ 
                       Result {
@@ -32,7 +32,8 @@ downloadTo dir id = do
                      , result = res}
 
 saveResult _ (Left msg) = putStrLn msg
-saveResult f (Right bs) = BS.writeFile f bs
+saveResult f (Right bs) = putStrLn ("Wrote " ++ f) >>
+                          BS.writeFile f bs
 
 main = do
   [outdir]                  <- getArgs
