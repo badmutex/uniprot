@@ -6,14 +6,19 @@ module Main where
 
 import Control.Applicative
 import Control.Monad (sequence)
-import Control.Parallel (pseq)
-import Control.Parallel.Strategies (parMap, rwhnf, rnf)
+import Control.Parallel (par,pseq)
+import Control.Parallel.Strategies (parMap, rwhnf, rnf, NFData)
 import Data.Char (toUpper)
+import Data.Either
 import Data.List (intercalate, isInfixOf)
+import Data.Maybe
 import Data.Ord (comparing)
 import System.Environment
 import Text.XML.HXT.Arrow
 import System.IO.Unsafe
+import System.FilePath
+import System.Posix.Files
+import System.IO
 
 
 data Entry = Entry {
@@ -23,6 +28,9 @@ data Entry = Entry {
     , organism
         :: String
     } deriving (Eq, Show)
+
+instance NFData Entry where
+    rnf (Entry { accession=n, entry=e, protein=p, organism=o }) = n `par` e `par` p `par` o `par` ()
 
 data Interaction = Interaction {
       origin
@@ -73,22 +81,30 @@ parseToEntry = atTag "entry" >>>
       organismName         = atTag "organism" /> hasName "name"    >>> tagData
 
 
-mkInteraction :: [String] -> IO Interaction
-mkInteraction [ori,tar,prob] =
-    let ori' = uniprot ori
-        tar' = uniprot tar
-        res = parMap rwhnf (\xml -> runX (readDocument [] xml >>> parseToEntry)) [ori', tar']
-    in (rearrange . flip mkInteraction' (read prob)) <$> sequence (res `pseq` res)
+type ErrorMsg = String
+mkInteraction :: FilePath -> [String] -> IO (Either ErrorMsg Interaction)
+mkInteraction dir [ori,tar,prob] = do
 
-        where uniprot id = "http://www.uniprot.org/uniprot/" ++ id ++ ".xml"
-              
-              rearrange :: Interaction -> Interaction
-              rearrange i = if has organism "Plasmodium" (origin i)
-                            then i { origin = target i, target = origin i }
-                            else i
+  let uniprots@[ori',tar'] = map uniprot [ori,tar]
 
-              mkInteraction' :: [[Entry]] -> Double -> Interaction
-              mkInteraction' [[o],[t]] p = Interaction { origin = o, target = t, score = p }
+  oks@[ori_ok,tar_ok] <- mapM fileExist uniprots
+
+  if and oks
+     then let res = parMap rwhnf (\xml -> runX (readDocument [] xml >>> parseToEntry)) uniprots
+          in (Right . flip mkInteraction' (read prob)) <$> sequence res
+     else return . Left $
+          if not ori_ok
+             then badEntry ori'
+             else badEntry tar'
+
+             where uniprot id = dir </> id <.> "xml"
+
+                   mkInteraction' :: [[Entry]] -> Double -> Interaction
+                   mkInteraction' [[o],[t]] p = Interaction { origin = o, target = t, score = p }
+
+                   badEntry = ("Cannot find " ++)
+
+
 
 interspecies :: Interaction -> Bool
 interspecies i = if same "Plasmodium" i ||
@@ -108,9 +124,16 @@ has f s e = (up s) `isInfixOf` (up $ f e)
           up = parMap rnf toUpper
 
 
-main = do
-  let self_interaction [ori,tar,prob] = if ori == tar then False else True
 
-  interactions  <- (filter self_interaction . parMap rnf words . lines) <$> getContents
-  interactions' <- filter interspecies <$> mapM mkInteraction interactions
-  mapM_ (putStrLn . csv) interactions'
+rearrange :: Interaction -> Interaction
+rearrange i = if has organism "Plasmodium" (origin i)
+              then i { origin = target i, target = origin i }
+              else i
+
+main = do
+  [dir]              <- getArgs
+  interactions       <- (parMap rnf words . filter (not . null) . lines) <$> getContents
+  (failed,succeeded) <- partitionEithers <$> mapM (mkInteraction dir) interactions
+  print' stdout csv succeeded
+  print' stderr id  failed
+    where print' h f = mapM_ (hPutStrLn h . f)
