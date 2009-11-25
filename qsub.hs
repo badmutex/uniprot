@@ -6,29 +6,30 @@ import Control.Monad
 import System.Directory (createDirectoryIfMissing)
 import System.Environment
 import System.Exit (ExitCode)
-import System.FilePath ((</>))
+import System.FilePath ((</>), takeFileName)
 import System.Process
 
 import qualified Data.ByteString.Lazy.Char8 as BS
 
+type Name = String
+type Executable = String
+
 user = "-M cabdulwa@nd.edu"
-mail = "-m bea"
--- parallel_env = "-pe omp 6"
 
-mkQsub = "qsub " ++ user ++ " " ++ mail -- ++ " " ++ parallel_env
+mkQsub file = "qsub " ++ user ++ " " ++ "-N " ++ (takeFileName file)
 
-mkCmd exec file = "cat " ++ file ++ " | " ++ exec ++ " 1>" ++ file ++ ".out" ++ " 2>" ++ file ++ ".err"
+mkCmd  exec file = "cat " ++ file ++ " | " ++ exec ++ " 1>" ++ file ++ ".out" ++ " 2>" ++ file ++ ".err"
 
---qsub :: String -> String -> IO ExitCode
+qsub :: Executable -> FilePath -> IO ExitCode
 qsub exec file = system $
                 "echo " ++ "'" ++ mkCmd exec file ++ "'" ++
                 " | " ++
-                mkQsub
+                mkQsub file
 
 qsub' exec file = return $ 
                   "echo " ++ "'" ++ mkCmd exec file ++ "'" ++
                   " | " ++
-                  mkQsub                  
+                  mkQsub file
 
 window :: Int -> [a] -> [[a]]
 window _ [] = []
@@ -50,4 +51,4 @@ main = do
   let files = getFileNames (length info) (outdir</>prefix)
   createDirectoryIfMissing True outdir
   mapM_ saveInfo' (files `zip` info)
-  mapM (\f -> qsub exec f) files
+  mapM_ (\f -> qsub exec f) files
