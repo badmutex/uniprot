@@ -5,6 +5,8 @@
 module UniprotXmlParser ( Entry(..)
                         , Interaction(..)
                         , CSV(..)
+                        , same
+                        , has
                         , run
                          ) where
 
@@ -119,8 +121,8 @@ interspecies i = if same "Plasmodium" i ||
                  then False
                  else True
 
-    where same :: String -> Interaction -> Bool
-          same s i = hasBoth organism s (origin i) (target i)
+same :: String -> Interaction -> Bool
+same s i = hasBoth organism s (origin i) (target i)
 
 hasBoth :: (Entry -> String) -> String -> Entry -> Entry -> Bool
 hasBoth f s a b = has f s a && has f s b
