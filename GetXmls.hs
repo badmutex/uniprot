@@ -10,7 +10,6 @@ import System.FilePath       ((</>), (<.>))
 import qualified Data.ByteString as BS
 
 
-
 data Result = Result {
       file   :: FilePath
     , result :: Either String BS.ByteString
@@ -32,8 +31,11 @@ downloadTo dir id = do
                      , result = res}
 
 saveResult _ (Left msg) = putStrLn msg
-saveResult f (Right bs) = putStrLn ("Wrote " ++ f) >>
-                          BS.writeFile f bs
+saveResult f (Right bs) = if BS.null bs -- some uniprot entries have been deleted yet
+                                        -- they still show up as 'Right' for some reason
+                          then putStrLn $ f ++ " was empty"
+                          else putStrLn ("Wrote " ++ f) >>
+                               BS.writeFile f bs
 
 main = do
   [outdir]                  <- getArgs
