@@ -51,15 +51,33 @@ instance NFData Interaction where
 class CSV a where
     csv :: a -> String
 
+-- | In lieu of comma-separated values since there may be a clash within the
+--  uniprot xml file (I'm looking at you Q8I528), separate them by pipe symbols |
+class LSV a where
+    lsv :: a -> String
+
+svEntry v e = intercalate v [ accession e
+                            , entry     e
+                            , protein   e
+                            , organism  e
+                            ]
+
 instance CSV Entry where
-    csv = csvEntry
-        where csvEntry :: Entry -> String
-              csvEntry e = intercalate ";" [accession e, entry e, protein e, organism e]
+    csv = svEntry ";"
+
+instance LSV Entry where
+    lsv = svEntry "|"
+
+svInteraction v i = intercalate v [ svEntry v $ origin i
+                                  , svEntry v $ target i
+                                  , show      $ score  i
+                                  ]
 
 instance CSV Interaction where
-    csv = csvInteraction
-        where csvInteraction :: Interaction -> String
-              csvInteraction i = intercalate ";" [csv $ origin i, csv $ target i, show $ score i]
+    csv = svInteraction ";"
+
+instance LSV Interaction where
+    lsv = svInteraction "|"
 
 parseToEntry = atTag "entry" >>>
                proc e -> do
@@ -145,6 +163,6 @@ run fixer filterFunc = do
   [dir]              <- getArgs
   interactions       <- (parMap rnf words . filter (not . null) . lines) <$> getContents
   (failed,succeeded) <- partitionEithers <$> mapM (mkInteraction dir) interactions
-  print' stdout csv . parMap rnf fixer . filter filterFunc $ succeeded
+  print' stdout lsv . parMap rnf fixer . filter filterFunc $ succeeded
   print' stderr id  failed
     where print' h f = mapM_ (hPutStrLn h . f)
