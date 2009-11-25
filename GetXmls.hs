@@ -1,3 +1,8 @@
+-- | Given a list of uniprot entries, download their XML files to a specified directory.
+--
+-- > cat uniprot.list | runhaskell GetXmls.hs ~/uniprot
+--
+
 module Main where
 
 import Control.Applicative   ((<$>))
@@ -9,13 +14,15 @@ import System.FilePath       ((</>), (<.>))
 
 import qualified Data.ByteString as BS
 
+type CanFail = Either String
+type UniprotAccessionNo = String
 
 data Result = Result {
-      file   :: FilePath
-    , result :: Either String BS.ByteString
+      file   :: FilePath                    -- ^ where to save the data
+    , result :: CanFail BS.ByteString -- ^ either failure or file contents
     } deriving Show
 
-downloadTo :: FilePath -> String -> IO (Either String Result)
+downloadTo :: FilePath -> UniprotAccessionNo -> IO (CanFail Result)
 downloadTo dir id = do
   let f         = dir </> id <.> "xml"
       uniprot s = "http://www.uniprot.org/uniprot/" ++ s ++ ".xml"
@@ -30,6 +37,7 @@ downloadTo dir id = do
                        file   = f
                      , result = res}
 
+saveResult :: FilePath -> CanFail BS.ByteString -> IO ()
 saveResult _ (Left msg) = putStrLn msg
 saveResult f (Right bs) = if BS.null bs -- some uniprot entries have been deleted yet
                                         -- they still show up as 'Right' for some reason
