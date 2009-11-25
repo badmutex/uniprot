@@ -10,7 +10,7 @@ import Data.Either           (partitionEithers)
 import Network.Curl.Download (openURI)
 import System.Directory      (doesFileExist)
 import System.Environment    (getArgs)
-import System.FilePath --       ((</>), (<.>))
+import System.FilePath       ((</>), (<.>), dropExtension, takeFileName)
 
 import qualified Data.ByteString as BS
 
