@@ -10,7 +10,7 @@ import Data.Either           (partitionEithers)
 import Network.Curl.Download (openURI)
 import System.Directory      (doesFileExist)
 import System.Environment    (getArgs)
-import System.FilePath       ((</>), (<.>))
+import System.FilePath --       ((</>), (<.>))
 
 import qualified Data.ByteString as BS
 
@@ -37,18 +37,28 @@ downloadTo dir id = do
                        file   = f
                      , result = res}
 
-saveResult :: FilePath -> CanFail BS.ByteString -> IO ()
-saveResult _ (Left msg) = putStrLn msg
-saveResult f (Right bs) = if BS.null bs -- some uniprot entries have been deleted yet
-                                        -- they still show up as 'Right' for some reason
-                          then putStrLn $ f ++ " was empty"
-                          else putStrLn ("Wrote " ++ f) >>
-                               BS.writeFile f bs
+fromRight (Right r) = r
+fromRight (Left _) = error "fromRight: passed a Left"
+
+saveResult :: CanFail Result -> IO () -- CanFail BS.ByteString -> IO ()
+saveResult (Left msg)  = putStrLn msg
+saveResult (Right (Result {file=path, result=contents})) =
+    case contents of
+      Left msg -> putStrLn msg
+      _        -> let bs = fromRight contents
+                      name = dropExtension . takeFileName $ path
+
+                  -- some uniprot entries have been deleted yet
+                  --  still show up as 'Right'
+                  in if BS.null bs
+                     then putStrLn $ name ++ " was empty"
+
+                     else do putStrLn $ "Writing " ++ path
+                             BS.writeFile path bs
+
 
 main = do
   [outdir]                  <- getArgs
   ids                       <- words <$> getContents
   xmls                      <- mapM (downloadTo outdir) ids
-  let (existing,downloaded) =  partitionEithers xmls
-  mapM_ putStrLn existing
-  mapM_ (\r -> saveResult (file r) (result r)) downloaded
+  mapM_ saveResult xmls
