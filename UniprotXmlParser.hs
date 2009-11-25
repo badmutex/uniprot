@@ -2,7 +2,11 @@
   Arrows
   , BangPatterns
   #-}
-module Main where
+module UniprotXmlParser ( Entry(..)
+                        , Interaction(..)
+                        , CSV(..)
+                        , run
+                         ) where
 
 import Control.Applicative
 import Control.Monad (sequence)
@@ -38,6 +42,9 @@ data Interaction = Interaction {
         :: Entry
     , score :: Double
     } deriving (Eq, Show)
+
+instance NFData Interaction where
+    rnf (Interaction { origin = o, target = t, score = s }) = o `par` t `par` s `par` ()
 
 class CSV a where
     csv :: a -> String
@@ -130,10 +137,12 @@ rearrange i = if has organism "Plasmodium" (origin i)
               then i { origin = target i, target = origin i }
               else i
 
-main = do
+
+run :: (Interaction -> Interaction) -> (Interaction -> Bool) -> IO ()
+run fixer filterFunc = do
   [dir]              <- getArgs
   interactions       <- (parMap rnf words . filter (not . null) . lines) <$> getContents
   (failed,succeeded) <- partitionEithers <$> mapM (mkInteraction dir) interactions
-  print' stdout csv succeeded
+  print' stdout csv . parMap rnf fixer . filter filterFunc $ succeeded
   print' stderr id  failed
     where print' h f = mapM_ (hPutStrLn h . f)
