@@ -132,30 +132,19 @@ mkInteraction dir [ori,tar,prob] = do
                    badEntry = ("Cannot find " ++)
 
 
-
-interspecies :: Interaction -> Bool
-interspecies i = if same "Plasmodium" i ||
-                    same "Human"      i
-                 then False
-                 else True
-
 same :: String -> Interaction -> Bool
 same s i = hasBoth organism s (origin i) (target i)
 
 hasBoth :: (Entry -> String) -> String -> Entry -> Entry -> Bool
-hasBoth f s a b = has f s a && has f s b
+hasBoth f s a b = has a f s && has b f s
 
-has :: (Entry -> String) -> String -> Entry -> Bool
-has f s e = (up s) `isInfixOf` (up $ f e)
+
+-- | Extract a value from an Entry and compare it to a string
+-- > has entry organism "Plasmodium"
+has :: Entry -> (Entry -> String) -> String -> Bool
+has e f s = (up s) `isInfixOf` (up $ f e)
     where up :: String -> String
           up = parMap rnf toUpper
-
-
-
-rearrange :: Interaction -> Interaction
-rearrange i = if has organism "Plasmodium" (origin i)
-              then i { origin = target i, target = origin i }
-              else i
 
 
 run :: (Interaction -> Interaction) -> (Interaction -> Bool) -> IO ()
